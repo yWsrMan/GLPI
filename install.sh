@@ -7,8 +7,8 @@ GLPI_DB="glpi"
 GLPI_USER="glpi"
 GLPI_PASSWORD="yourstrongpassword"
 
-#
 apt update && apt upgrade -y
+
 apt install -y apache2 php php-{apcu,cli,common,curl,gd,imap,ldap,mysql,xmlrpc,xml,mbstring,bcmath,intl,zip,redis,bz2} libapache2-mod-php php-soap php-cas
 apt install -y mariadb-server
 
@@ -89,3 +89,31 @@ find /var/lib/glpi -type f -exec chmod 0644 {} \;
 find /var/lib/glpi -type d -exec chmod 0755 {} \;
 find /var/log/glpi -type f -exec chmod 0644 {} \;
 find /var/log/glpi -type d -exec chmod 0755 {} \;
+
+#
+cat << 'EOF' > /etc/apache2/sites-available/glpi.conf
+<VirtualHost *:80>
+    ServerName yourglpi.yourdomain.com
+    DocumentRoot /var/www/html/glpi/public
+
+    <Directory /var/www/html/glpi/public>
+        Require all granted
+        RewriteEngine On
+
+        RewriteCond %{HTTP:Authorization} ^(.+)$
+        RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php [QSA,L]
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/glpi_error.log
+    CustomLog ${APACHE_LOG_DIR}/glpi_access.log combined
+</VirtualHost>
+EOF
+
+#
+a2dissite 000-default.conf
+a2enmod rewrite
+a2ensite glpi.conf
+systemctl reload apache2.service
