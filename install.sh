@@ -5,7 +5,7 @@ MYSQL_ROOT_PASSWORD="123"
 
 GLPI_DB="glpi"
 GLPI_USER="glpi"
-GLPI_PASSWORD="yourstrongpassword"
+GLPI_PASSWORD="glpi"
 
 apt update && apt upgrade -y
 
